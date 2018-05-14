@@ -25,8 +25,9 @@ lazy val root = (project in file("."))
 
       // Doobie
       "org.tpolecat"          %% "doobie-core"          % DoobieVersion,
-      "org.tpolecat"          %% "doobie-h2"            % DoobieVersion,
+      //"org.tpolecat"          %% "doobie-h2"            % DoobieVersion,
       "org.tpolecat"          %% "doobie-hikari"        % DoobieVersion,
+      "org.tpolecat"          %% "doobie-postgres-cats" % "0.4.4",
       "com.h2database"        %  "h2"                   % H2Version,
       "org.flywaydb"          %  "flyway-core"          % FlywayVersion,
 
@@ -42,4 +43,18 @@ lazy val root = (project in file("."))
       "org.scalamock"         %% "scalamock"            % ScalaMockVersion  % "test"
     )
   )
+  .settings(
+    fork in run := true,
+    fork in Test := true,
+    fork in IntegrationTest := true,
+    fmtSettings
+  )
+
+lazy val fmtSettings =
+  Seq(
+    scalafmtOnCompile := true,
+    scalafmtOnCompile.in(Sbt) := false,
+    scalafmtVersion := "1.3.0"
+  )
+
 

@@ -6,12 +6,12 @@ import io.circe.Json
 import io.circe.literal._
 import org.http4s.circe._
 import org.http4s.dsl.io._
-import org.http4s.{Request, Response, Status, Uri}
+import org.http4s.{ Request, Response, Status, Uri }
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 
-import org.fabian.effectless.tweet.{Todo, TodoService, TodoRepository}
-import org.fabian.effectless.tweet.Importance.{High, Low, Medium}
+import org.fabian.effectless.tweet.{ Todo, TodoRepository, TodoService }
+import org.fabian.effectless.tweet.Importance.{ High, Low, Medium }
 
 class TodoServiceSpec extends WordSpec with MockFactory with Matchers {
   private val repository = stub[TodoRepository]
@@ -48,7 +48,9 @@ class TodoServiceSpec extends WordSpec with MockFactory with Matchers {
           "importance": ${todo.importance.value}
         }"""
 
-      val response = serve(Request[IO](PUT, Uri.unsafeFromString(s"/todos/$id")).withBody(updateJson).unsafeRunSync())
+      val response = serve(
+        Request[IO](PUT, Uri.unsafeFromString(s"/todos/$id")).withBody(updateJson).unsafeRunSync()
+      )
       response.status shouldBe Status.Ok
       response.as[Json].unsafeRunSync() shouldBe json"""
         {
@@ -107,7 +109,6 @@ class TodoServiceSpec extends WordSpec with MockFactory with Matchers {
     }
   }
 
-  private def serve(request: Request[IO]): Response[IO] = {
+  private def serve(request: Request[IO]): Response[IO] =
     service.orNotFound(request).unsafeRunSync()
-  }
 }
