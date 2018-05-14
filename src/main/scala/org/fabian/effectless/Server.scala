@@ -1,13 +1,13 @@
-package org.fabian.googlehomebackend
+package org.fabian.effectless
 
 import cats.effect.IO
 import config.Config
 import fs2.{Stream, StreamApp}
 import fs2.StreamApp.ExitCode
-import org.fabian.googlehomebackend.db.Database
+import org.fabian.effectless.db.Database
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.blaze.BlazeBuilder
-import org.fabian.googlehomebackend.tweet.{TodoService, TodoRepository}
+import org.fabian.effectless.tweet.{TodoService, TodoRepository}
 
 import scala.concurrent.ExecutionContext.Implicits.global
 

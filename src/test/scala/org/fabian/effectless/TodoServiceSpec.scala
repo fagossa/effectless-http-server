@@ -1,4 +1,4 @@
-package org.fabian.googlehomebackend
+package org.fabian.effectless
 
 import cats.effect.IO
 import fs2.Stream
@@ -10,8 +10,8 @@ import org.http4s.{Request, Response, Status, Uri}
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{Matchers, WordSpec}
 
-import org.fabian.googlehomebackend.tweet.{Todo, TodoService, TodoRepository}
-import org.fabian.googlehomebackend.tweet.Importance.{High, Low, Medium}
+import org.fabian.effectless.tweet.{Todo, TodoService, TodoRepository}
+import org.fabian.effectless.tweet.Importance.{High, Low, Medium}
 
 class TodoServiceSpec extends WordSpec with MockFactory with Matchers {
   private val repository = stub[TodoRepository]

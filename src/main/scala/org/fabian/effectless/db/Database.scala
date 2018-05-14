@@ -1,6 +1,6 @@
-package org.fabian.googlehomebackend.db
+package org.fabian.effectless.db
 
-import org.fabian.googlehomebackend.config.DatabaseConfig
+import org.fabian.effectless.config.DatabaseConfig
 import cats.effect.IO
 import doobie.hikari.HikariTransactor
 import org.flywaydb.core.Flyway

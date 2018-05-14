@@ -1,5 +1,6 @@
-package org.fabian.googlehomebackend.tweet
+package org.fabian.effectless.tweet
 
+import cats.Show
 import io.circe.{Decoder, Encoder}
 
 abstract sealed class Importance(val value: String)
@@ -23,4 +24,16 @@ object Importance {
 
 case class Todo(id: Option[Long], description: String, importance: Importance)
 
-case object TodoNotFoundError
+object Todo {
+
+  sealed trait TodoError
+  case class TodoNotFoundError(id: Option[Long]) extends TodoError
+
+  implicit val todoErrorShow = new Show[TodoError] {
+    override def show(t: TodoError): String = t match {
+      case TodoNotFoundError(maybeLong) => s"Todo with Id <${maybeLong.getOrElse("")}> was not found"
+    }
+  }
+
+}
+

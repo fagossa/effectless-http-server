@@ -1,4 +1,4 @@
-package org.fabian.googlehomebackend
+package org.fabian.effectless
 
 import cats.effect.IO
 import io.circe.Json
@@ -11,9 +11,9 @@ import io.circe.optics.JsonPath._
 import org.http4s.server.{Server => Http4sServer}
 import org.http4s.server.blaze.BlazeBuilder
 
-import org.fabian.googlehomebackend.config.Config
-import org.fabian.googlehomebackend.db.Database
-import org.fabian.googlehomebackend.tweet.{TodoService, TodoRepository}
+import org.fabian.effectless.config.Config
+import org.fabian.effectless.db.Database
+import org.fabian.effectless.tweet.{TodoService, TodoRepository}
 
 class TodoServerSpec extends WordSpec with Matchers with BeforeAndAfterAll {
   private lazy val client = Http1Client[IO]().unsafeRunSync()

@@ -1,4 +1,4 @@
-package org.fabian.googlehomebackend.config
+package org.fabian.effectless.config
 
 import cats.effect.IO
 import com.typesafe.config.ConfigFactory
