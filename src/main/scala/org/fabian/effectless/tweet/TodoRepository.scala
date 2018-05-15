@@ -2,25 +2,21 @@ package org.fabian.effectless.tweet
 
 import cats.effect.IO
 import doobie.util.transactor.Transactor
-import fs2.Stream
 import doobie._
 import doobie.implicits._
+import fs2.Stream
 import org.fabian.effectless.tweet.Todo.TodoError
 import org.fabian.effectless.tweet.Todo.TodoNotFoundError
 
 class TodoRepository(xa: Transactor[IO]) {
-  private implicit val importanceMeta: Meta[Importance] =
-    Meta[String].xmap(Importance.unsafeFromString, _.value)
-
   import cats.syntax.option._
 
   def getTodos: Stream[IO, Todo] =
-    sql"SELECT id, description, importance FROM todo".query[Todo].stream.transact(xa)
+    TodoStatement.findTodos.stream.transact(xa)
 
   def getTodo(id: Long): IO[Either[TodoError, Todo]] =
-    sql"SELECT id, description, importance FROM todo WHERE id = $id"
-      .query[Todo]
-      .option
+    TodoStatement
+      .findTodoById(id)
       .transact(xa)
       .map {
         case Some(todo) => Right(todo)
@@ -28,24 +24,28 @@ class TodoRepository(xa: Transactor[IO]) {
       }
 
   def createTodo(todo: Todo): IO[Todo] =
-    sql"INSERT INTO todo (description, importance) VALUES (${todo.description}, ${todo.importance})".update
-      .withUniqueGeneratedKeys[Long]("id")
+    TodoStatement
+      .createTodoQuery(todo)
       .transact(xa)
       .map { id =>
         todo.copy(id = id.some)
       }
 
   def deleteTodo(id: Long): IO[Either[TodoError, Unit]] =
-    sql"DELETE FROM todo WHERE id = $id".update.run.transact(xa).map { affectedRows =>
-      if (affectedRows == 1) {
-        Right(())
-      } else {
-        Left(TodoNotFoundError(id.some))
+    TodoStatement
+      .deleteTodoQuery(id)
+      .transact(xa)
+      .map { affectedRows =>
+        if (affectedRows == 1) {
+          Right(())
+        } else {
+          Left(TodoNotFoundError(id.some))
+        }
       }
-    }
 
   def updateTodo(id: Long, todo: Todo): IO[Either[TodoError, Todo]] =
-    sql"UPDATE todo SET description = ${todo.description}, importance = ${todo.importance} WHERE id = $id".update.run
+    TodoStatement
+      .updateTodoQuery(id, todo)
       .transact(xa)
       .map { affectedRows =>
         if (affectedRows == 1) {
@@ -54,4 +54,30 @@ class TodoRepository(xa: Transactor[IO]) {
           Left(TodoNotFoundError(id.some))
         }
       }
+}
+
+object TodoStatement {
+
+  import doobie.util.meta.Meta
+  private implicit val importanceMeta: Meta[Importance] =
+    Meta[String].xmap(Importance.unsafeFromString, _.value)
+
+  def findTodos: Query0[Todo] =
+    sql"SELECT id, description, importance FROM todo"
+      .query[Todo]
+
+  def findTodoById(id: Long): doobie.ConnectionIO[Option[Todo]] =
+    sql"SELECT id, description, importance FROM todo WHERE id = $id"
+      .query[Todo]
+      .option
+
+  def createTodoQuery(todo: Todo): ConnectionIO[Long] =
+    sql"INSERT INTO todo (description, importance) VALUES (${todo.description}, ${todo.importance})".update
+      .withUniqueGeneratedKeys[Long]("id")
+
+  def deleteTodoQuery(id: Long): ConnectionIO[Int] =
+    sql"DELETE FROM todo WHERE id = $id".update.run
+
+  def updateTodoQuery(id: Long, todo: Todo): ConnectionIO[Int] =
+    sql"UPDATE todo SET description = ${todo.description}, importance = ${todo.importance} WHERE id = $id".update.run
 }
