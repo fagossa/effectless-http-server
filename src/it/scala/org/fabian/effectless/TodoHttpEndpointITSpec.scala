@@ -13,9 +13,9 @@ import org.http4s.server.blaze.BlazeBuilder
 
 import org.fabian.effectless.config.Config
 import org.fabian.effectless.db.Database
-import org.fabian.effectless.tweet.{TodoService, TodoRepository}
+import org.fabian.effectless.world.tweet.{TodoHttpEndpoint, TodoRepository}
 
-class TodoServerSpec extends WordSpec with Matchers with BeforeAndAfterAll {
+class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterAll {
   private lazy val client = Http1Client[IO]().unsafeRunSync()
 
   private lazy val config = Config.load("test.conf").unsafeRunSync()
@@ -139,7 +139,7 @@ class TodoServerSpec extends WordSpec with Matchers with BeforeAndAfterAll {
       repository = new TodoRepository(transactor)
       server <- BlazeBuilder[IO]
         .bindHttp(config.server.port, config.server.host)
-        .mountService(new TodoService(repository).service, "/").start
+        .mountService(new TodoHttpEndpoint(repository).service, "/").start
     } yield server
   }
 }

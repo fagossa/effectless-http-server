@@ -1,17 +1,21 @@
-package org.fabian.effectless.tweet
+package org.fabian.effectless.world.tweet
 
 import cats.Show.ToShowOps
 import cats.effect.IO
+import fs2.Stream
 import io.circe.generic.auto._
 import io.circe.syntax._
-import fs2.Stream
-import org.http4s.{ HttpService, MediaType, Response, Uri }
+import org.http4s.{ HttpService, MediaType, Uri }
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
 import org.http4s.headers.{ `Content-Type`, Location }
-import org.fabian.effectless.tweet.Todo.TodoError
+import org.fabian.effectless.http.HttpOps
+import org.fabian.effectless.world.tweet.Todo.TodoError
 
-class TodoService(repository: TodoRepository) extends Http4sDsl[IO] with ToShowOps {
+class TodoHttpEndpoint(repository: TodoRepository)
+    extends Http4sDsl[IO]
+    with HttpOps
+    with ToShowOps {
 
   val service = HttpService[IO] {
     case GET -> Root / "todos" =>
@@ -23,7 +27,7 @@ class TodoService(repository: TodoRepository) extends Http4sDsl[IO] with ToShowO
     case GET -> Root / "todos" / LongVar(id) =>
       for {
         getResult <- repository.getTodo(id)
-        response  <- toResult(getResult)
+        response  <- resultOrNotFound[TodoError, Todo](getResult)
       } yield response
 
     case req @ POST -> Root / "todos" =>
@@ -40,7 +44,7 @@ class TodoService(repository: TodoRepository) extends Http4sDsl[IO] with ToShowO
       for {
         todo         <- req.decodeJson[Todo]
         updateResult <- repository.updateTodo(id, todo)
-        response     <- toResult(updateResult)
+        response     <- resultOrNotFound[TodoError, Todo](updateResult)
       } yield response
 
     case DELETE -> Root / "todos" / LongVar(id) =>
@@ -50,9 +54,4 @@ class TodoService(repository: TodoRepository) extends Http4sDsl[IO] with ToShowO
       }
   }
 
-  private def toResult(result: Either[TodoError, Todo]): IO[Response[IO]] =
-    result match {
-      case Left(error) => NotFound(error.show)
-      case Right(todo) => Ok(todo.asJson)
-    }
 }

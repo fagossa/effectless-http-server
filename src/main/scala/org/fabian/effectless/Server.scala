@@ -7,7 +7,7 @@ import fs2.StreamApp.ExitCode
 import org.fabian.effectless.db.Database
 import org.http4s.dsl.Http4sDsl
 import org.http4s.server.blaze.BlazeBuilder
-import org.fabian.effectless.tweet.{ TodoRepository, TodoService }
+import org.fabian.effectless.world.tweet.{ TodoHttpEndpoint, TodoRepository }
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -20,7 +20,7 @@ object Server extends StreamApp[IO] with Http4sDsl[IO] {
       _          <- Stream.eval(Database.initialize(transactor))
       exitCode <- BlazeBuilder[IO]
         .bindHttp(config.server.port, config.server.host)
-        .mountService(new TodoService(new TodoRepository(transactor)).service, "/")
+        .mountService(new TodoHttpEndpoint(new TodoRepository(transactor)).service, "/")
         .serve
     } yield exitCode
 
