@@ -2,7 +2,7 @@ package org.fabian.effectless
 
 import cats.effect.IO
 import config.Config
-import fs2.{ Stream, StreamApp }
+import fs2.StreamApp
 import fs2.StreamApp.ExitCode
 import org.fabian.effectless.db.Database
 import org.http4s.dsl.Http4sDsl
