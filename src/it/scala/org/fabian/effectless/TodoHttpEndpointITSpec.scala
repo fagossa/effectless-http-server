@@ -5,15 +5,15 @@ import io.circe.Json
 import io.circe.literal._
 import org.http4s.circe._
 import org.http4s.client.blaze.Http1Client
-import org.http4s.{Method, Request, Status, Uri}
-import org.scalatest.{BeforeAndAfterAll, Matchers, WordSpec}
+import org.http4s.{ Method, Request, Status, Uri }
+import org.scalatest.{ BeforeAndAfterAll, Matchers, WordSpec }
 import io.circe.optics.JsonPath._
-import org.http4s.server.{Server => Http4sServer}
+import org.http4s.server.{ Server => Http4sServer }
 import org.http4s.server.blaze.BlazeBuilder
 
 import org.fabian.effectless.config.Config
 import org.fabian.effectless.db.Database
-import org.fabian.effectless.world.tweet.{TodoHttpEndpoint, TodoRepository}
+import org.fabian.effectless.domain.todo.{ TodoHttpEndpoint, TodoRepository }
 
 class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterAll {
   private lazy val client = Http1Client[IO]().unsafeRunSync()
@@ -33,12 +33,15 @@ class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterA
     "create a todo" in {
       val description = "my todo 1"
       val importance = "high"
-      val createJson =json"""
+      val createJson = json"""
         {
           "description": $description,
           "importance": $importance
         }"""
-      val request = Request[IO](method = Method.POST, uri = Uri.unsafeFromString(s"$urlStart/todos")).withBody(createJson).unsafeRunSync()
+      val request = Request[IO](
+        method = Method.POST,
+        uri = Uri.unsafeFromString(s"$urlStart/todos")
+      ).withBody(createJson).unsafeRunSync()
       val json = client.expect[Json](request).unsafeRunSync()
       root.id.long.getOption(json).nonEmpty shouldBe true
       root.description.string.getOption(json) shouldBe Some(description)
@@ -55,7 +58,10 @@ class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterA
           "description": $description,
           "importance": $importance
         }"""
-      val request = Request[IO](method = Method.PUT, uri = Uri.unsafeFromString(s"$urlStart/todos/$id")).withBody(updateJson).unsafeRunSync()
+      val request = Request[IO](
+        method = Method.PUT,
+        uri = Uri.unsafeFromString(s"$urlStart/todos/$id")
+      ).withBody(updateJson).unsafeRunSync()
       client.expect[Json](request).unsafeRunSync() shouldBe json"""
         {
           "id": $id,
@@ -68,7 +74,9 @@ class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterA
       val description = "my todo 3"
       val importance = "medium"
       val id = createTodo(description, importance)
-      client.expect[Json](Uri.unsafeFromString(s"$urlStart/todos/$id")).unsafeRunSync() shouldBe json"""
+      client
+        .expect[Json](Uri.unsafeFromString(s"$urlStart/todos/$id"))
+        .unsafeRunSync() shouldBe json"""
         {
           "id": $id,
           "description": $description,
@@ -80,10 +88,12 @@ class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterA
       val description = "my todo 4"
       val importance = "low"
       val id = createTodo(description, importance)
-      val deleteRequest = Request[IO](method = Method.DELETE, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
+      val deleteRequest =
+        Request[IO](method = Method.DELETE, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
       client.status(deleteRequest).unsafeRunSync() shouldBe Status.NoContent
 
-      val getRequest = Request[IO](method = Method.GET, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
+      val getRequest =
+        Request[IO](method = Method.GET, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
       client.status(getRequest).unsafeRunSync() shouldBe Status.NotFound
     }
 
@@ -91,7 +101,8 @@ class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterA
       // Remove all existing todos
       val json = client.expect[Json](Uri.unsafeFromString(s"$urlStart/todos")).unsafeRunSync()
       root.each.id.long.getAll(json).foreach { id =>
-        val deleteRequest = Request[IO](method = Method.DELETE, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
+        val deleteRequest =
+          Request[IO](method = Method.DELETE, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
         client.status(deleteRequest).unsafeRunSync() shouldBe Status.NoContent
       }
 
@@ -121,25 +132,27 @@ class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterA
   }
 
   private def createTodo(description: String, importance: String): Long = {
-    val createJson =json"""
+    val createJson = json"""
       {
         "description": $description,
         "importance": $importance
       }"""
-    val request = Request[IO](method = Method.POST, uri = Uri.unsafeFromString(s"$urlStart/todos")).withBody(createJson).unsafeRunSync()
+    val request = Request[IO](method = Method.POST, uri = Uri.unsafeFromString(s"$urlStart/todos"))
+      .withBody(createJson)
+      .unsafeRunSync()
     val json = client.expect[Json](request).unsafeRunSync()
     root.id.long.getOption(json).nonEmpty shouldBe true
     root.id.long.getOption(json).get
   }
 
-  private def createServer(): IO[Http4sServer[IO]] = {
+  private def createServer(): IO[Http4sServer[IO]] =
     for {
       transactor <- Database.transactor(config.database)
-      _ <- Database.initialize(transactor)
+      _          <- Database.initialize(transactor)
       repository = new TodoRepository(transactor)
       server <- BlazeBuilder[IO]
         .bindHttp(config.server.port, config.server.host)
-        .mountService(new TodoHttpEndpoint(repository).service, "/").start
+        .mountService(new TodoHttpEndpoint(repository).service, "/")
+        .start
     } yield server
-  }
 }

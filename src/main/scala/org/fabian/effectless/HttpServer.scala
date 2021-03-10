@@ -1,27 +1,25 @@
 package org.fabian.effectless
 
 import cats.effect.IO
-import config.Config
-import fs2.StreamApp
-import fs2.StreamApp.ExitCode
-import org.fabian.effectless.db.Database
-import org.http4s.dsl.Http4sDsl
+import cats.effect.{ ConcurrentEffect, Timer }
 import org.http4s.server.blaze.BlazeBuilder
-import org.fabian.effectless.world.tweet.{ TodoHttpEndpoint, TodoRepository }
+import fs2.Stream
+import scala.concurrent.ExecutionContext.global
+import org.http4s.server.blaze.BlazeServerBuilder
 
-import scala.concurrent.ExecutionContext.Implicits.global
+import org.fabian.effectless.config.Config
+import org.fabian.effectless.db.Database
+import org.fabian.effectless.domain.todo.{ TodoHttpEndpoint, TodoRepository }
 
-object Server extends StreamApp[IO] with Http4sDsl[IO] {
-
-  def stream(args: List[String], requestShutdown: IO[Unit]): Stream[IO, ExitCode] =
+object HttpServer {
+  def stream(): Stream[IO, Nothing] =
     for {
       config     <- Stream.eval(Config.load())
       transactor <- Stream.eval(Database.transactor(config.database))
       _          <- Stream.eval(Database.initialize(transactor))
-      exitCode <- BlazeBuilder[IO]
+      exitCode <- BlazeServerBuilder[IO](global)
         .bindHttp(config.server.port, config.server.host)
         .mountService(new TodoHttpEndpoint(new TodoRepository(transactor)).service, "/")
         .serve
     } yield exitCode
-
 }

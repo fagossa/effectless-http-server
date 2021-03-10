@@ -1,4 +1,4 @@
-package org.fabian.effectless.world.tweet
+package org.fabian.effectless.domain.todo
 
 import cats.Show.ToShowOps
 import cats.effect.IO
@@ -10,7 +10,8 @@ import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
 import org.http4s.headers.{ `Content-Type`, Location }
 import org.fabian.effectless.http.HttpOps
-import org.fabian.effectless.world.tweet.Todo.TodoError
+import org.fabian.effectless.domain.todo.Todo.TodoError
+//import org.http4s.Method._
 
 class TodoHttpEndpoint(repository: TodoRepository)
     extends Http4sDsl[IO]
@@ -21,7 +22,7 @@ class TodoHttpEndpoint(repository: TodoRepository)
     case GET -> Root / "todos" =>
       Ok(
         Stream("[") ++ repository.getTodos.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"),
-        `Content-Type`(MediaType.`application/json`)
+        `Content-Type`(MediaType.application.json)
       )
 
     case GET -> Root / "todos" / LongVar(id) =>

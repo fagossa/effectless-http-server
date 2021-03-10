@@ -10,8 +10,8 @@ import org.http4s.{ Request, Response, Status, Uri }
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.{ Matchers, WordSpec }
 
-import org.fabian.effectless.world.tweet.{ Todo, TodoHttpEndpoint, TodoRepository }
-import org.fabian.effectless.world.tweet.Importance.{ High, Low, Medium }
+import org.fabian.effectless.domain.todo.{ Todo, TodoHttpEndpoint, TodoRepository }
+import org.fabian.effectless.domain.todo.Importance.{ High, Low, Medium }
 
 class TodoHttpEndpointSpec extends WordSpec with MockFactory with Matchers {
   private val repository = stub[TodoRepository]

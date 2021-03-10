@@ -1,3 +1,5 @@
+// https://github.com/http4s/http4s.g8/tree/0.21/src/main/g8/src/main/scala/%24package__packaged%24
+
 val Http4sVersion = "0.21.20"
 val Specs2Version = "4.1.0"
 val LogbackVersion = "1.2.3"

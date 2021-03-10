@@ -1,12 +1,12 @@
-package org.fabian.effectless.world.tweet
+package org.fabian.effectless.domain.todo
 
 import cats.effect.IO
 import doobie.util.transactor.Transactor
 import doobie._
 import doobie.implicits._
 import fs2.Stream
-import org.fabian.effectless.world.tweet.Todo.TodoError
-import org.fabian.effectless.world.tweet.Todo.TodoNotFoundError
+import org.fabian.effectless.domain.todo.Todo.TodoError
+import org.fabian.effectless.domain.todo.Todo.TodoNotFoundError
 
 class TodoRepository(xa: Transactor[IO]) {
   import cats.syntax.option._

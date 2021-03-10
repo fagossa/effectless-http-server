@@ -1,4 +1,4 @@
-package org.fabian.effectless.world.tweet
+package org.fabian.effectless.domain.todo
 
 import cats.Show
 import io.circe.{ Decoder, Encoder }
