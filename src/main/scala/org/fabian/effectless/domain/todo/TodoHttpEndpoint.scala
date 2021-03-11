@@ -5,7 +5,7 @@ import cats.effect.IO
 import fs2.Stream
 import io.circe.generic.auto._
 import io.circe.syntax._
-import org.http4s.{ HttpService, MediaType, Uri }
+import org.http4s.{ HttpRoutes, HttpService, MediaType, Uri }
 import org.http4s.dsl.Http4sDsl
 import org.http4s.circe._
 import org.http4s.headers.{ `Content-Type`, Location }
@@ -18,7 +18,7 @@ class TodoHttpEndpoint(repository: TodoRepository)
     with HttpOps
     with ToShowOps {
 
-  val service = HttpService[IO] {
+  val service: HttpRoutes[IO] = HttpService[IO] { // HttpRoutes
     case GET -> Root / "todos" =>
       Ok(
         Stream("[") ++ repository.getTodos.map(_.asJson.noSpaces).intersperse(",") ++ Stream("]"),
