@@ -5,7 +5,7 @@ import cats.effect.{ ExitCode, IO }
 import cats.implicits._
 import doobie.hikari.HikariTransactor
 import fs2.Stream
-import org.fabian.effectless.config.Config
+import org.fabian.effectless.config.AppConfig
 import org.fabian.effectless.db.Database
 import org.fabian.effectless.domain.health.HealthCheckHttpEndpoint
 import org.fabian.effectless.domain.todo.{ TodoHttpEndpoint, TodoRepository }
@@ -32,7 +32,7 @@ final class HttpServer(implicit executionContext: ExecutionContext) {
 
   def stream(): Stream[IO, ExitCode] =
     for {
-      config     <- Stream.eval(Config.load())
+      config     <- Stream.eval(AppConfig.load())
       transactor <- Stream.eval(Database.transactor(config.database))
       _          <- Stream.eval(Database.initialize(transactor))
       finalHttpApp = Logger.httpApp[IO](true, true)(buildRoutes(transactor))
