@@ -8,12 +8,13 @@ import org.http4s.circe._
 import org.http4s.dsl.io._
 import org.http4s.{ Request, Response, Status, Uri }
 import org.scalamock.scalatest.MockFactory
-import org.scalatest.{ Matchers, WordSpec }
-
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 import org.fabian.effectless.domain.todo.{ Todo, TodoHttpEndpoint, TodoRepository }
 import org.fabian.effectless.domain.todo.Importance.{ High, Low, Medium }
+import org.http4s.implicits.{ http4sKleisliResponseSyntaxOptionT, http4sLiteralsSyntax }
 
-class TodoHttpEndpointSpec extends WordSpec with MockFactory with Matchers {
+class TodoHttpEndpointSpec extends AnyWordSpec with MockFactory with Matchers {
   private val repository = stub[TodoRepository]
 
   private val service = new TodoHttpEndpoint(repository).service
@@ -28,7 +29,7 @@ class TodoHttpEndpointSpec extends WordSpec with MockFactory with Matchers {
           "description": ${todo.description},
           "importance": ${todo.importance.value}
         }"""
-      val response = serve(Request[IO](POST, uri("/todos")).withBody(createJson).unsafeRunSync())
+      val response = serve(Request[IO](POST, uri"/todos").withEntity(createJson))
       response.status shouldBe Status.Created
       response.as[Json].unsafeRunSync() shouldBe json"""
         {
@@ -49,7 +50,7 @@ class TodoHttpEndpointSpec extends WordSpec with MockFactory with Matchers {
         }"""
 
       val response = serve(
-        Request[IO](PUT, Uri.unsafeFromString(s"/todos/$id")).withBody(updateJson).unsafeRunSync()
+        Request[IO](PUT, Uri.unsafeFromString(s"/todos/$id")).withEntity(updateJson)
       )
       response.status shouldBe Status.Ok
       response.as[Json].unsafeRunSync() shouldBe json"""
@@ -83,7 +84,7 @@ class TodoHttpEndpointSpec extends WordSpec with MockFactory with Matchers {
       val todos = Stream(todo1, todo2)
       (repository.getTodos _).when().returns(todos)
 
-      val response = serve(Request[IO](GET, uri("/todos")))
+      val response = serve(Request[IO](GET, uri"/todos"))
       response.status shouldBe Status.Ok
       response.as[Json].unsafeRunSync() shouldBe json"""
         [

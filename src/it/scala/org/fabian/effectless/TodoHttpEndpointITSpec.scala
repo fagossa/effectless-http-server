@@ -3,20 +3,21 @@ package org.fabian.effectless
 import cats.effect.IO
 import io.circe.Json
 import io.circe.literal._
-import org.http4s.circe._
-import org.http4s.client.blaze.Http1Client
-import org.http4s.{ Method, Request, Status, Uri }
-import org.scalatest.{ BeforeAndAfterAll, Matchers, WordSpec }
 import io.circe.optics.JsonPath._
+import org.http4s.circe._
+import org.http4s.{ Method, Request, Status, Uri }
 import org.http4s.server.{ Server => Http4sServer }
 import org.http4s.server.blaze.BlazeBuilder
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.matchers.must.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-import org.fabian.effectless.config.Config
+//import org.fabian.effectless.config.Config
 import org.fabian.effectless.db.Database
 import org.fabian.effectless.domain.todo.{ TodoHttpEndpoint, TodoRepository }
 
-class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterAll {
-  private lazy val client = Http1Client[IO]().unsafeRunSync()
+class TodoHttpEndpointITSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
+  /* private lazy val client = Http1Client[IO]().unsafeRunSync()
 
   private lazy val config = Config.load("test.conf").unsafeRunSync()
 
@@ -154,5 +155,5 @@ class TodoHttpEndpointITSpec extends WordSpec with Matchers with BeforeAndAfterA
         .bindHttp(config.server.port, config.server.host)
         .mountService(new TodoHttpEndpoint(repository).service, "/")
         .start
-    } yield server
+    } yield server*/
 }

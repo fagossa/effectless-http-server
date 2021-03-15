@@ -58,9 +58,11 @@ class TodoRepository(xa: Transactor[IO]) {
 
 object TodoStatement {
 
+  Importance.High.value
+
   import doobie.util.meta.Meta
   private implicit val importanceMeta: Meta[Importance] =
-    Meta[String].xmap(Importance.unsafeFromString, _.value)
+    Meta[String].imap(Importance.unsafeFromString)(_.value)
 
   def findTodos: Query0[Todo] =
     sql"SELECT id, description, importance FROM todo"
