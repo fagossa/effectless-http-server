@@ -1,7 +1,7 @@
 package org.fabian.effectless
 
 import cats.data.Kleisli
-import cats.effect.{ ExitCode, IO }
+import cats.effect.{ ContextShift, ExitCode, IO, Timer }
 import cats.implicits._
 import doobie.hikari.HikariTransactor
 import fs2.Stream
@@ -19,8 +19,8 @@ import scala.concurrent.ExecutionContext.global
 
 final class HttpServer(implicit executionContext: ExecutionContext) {
 
-  private implicit val cs = IO.contextShift(executionContext)
-  private implicit val timer = IO.timer(executionContext)
+  private implicit val cs: ContextShift[IO] = IO.contextShift(executionContext)
+  private implicit val timer: Timer[IO] = IO.timer(executionContext)
 
   private def buildRoutes(
     transactor: HikariTransactor[IO]
@@ -35,7 +35,7 @@ final class HttpServer(implicit executionContext: ExecutionContext) {
       config     <- Stream.eval(AppConfig.load())
       transactor <- Stream.eval(Database.transactor(config.database))
       _          <- Stream.eval(Database.initialize(transactor))
-      finalHttpApp = Logger.httpApp[IO](true, true)(buildRoutes(transactor))
+      finalHttpApp = Logger.httpApp[IO](logHeaders = true, logBody = true)(buildRoutes(transactor))
       exitCode <- BlazeServerBuilder[IO](global)
         .bindHttp(config.server.port, config.server.host)
         .enableHttp2(true)

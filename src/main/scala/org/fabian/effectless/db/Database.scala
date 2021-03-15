@@ -1,14 +1,32 @@
 package org.fabian.effectless.db
 
-import cats.effect.IO
-import doobie.hikari.HikariTransactor
+import com.zaxxer.hikari.{ HikariConfig, HikariDataSource }
 import org.flywaydb.core.Flyway
 import org.fabian.effectless.config.DatabaseConfig
 
+import java.util.concurrent.Executors
+import scala.concurrent.ExecutionContext
+
 object Database {
-  def transactor(config: DatabaseConfig): IO[HikariTransactor[IO]] =
-    HikariTransactor
-      .newHikariTransactor[IO](config.driver, config.url, config.user, config.password)
+
+  import cats.effect._
+  import doobie.hikari._
+  def transactor(
+    dbConfig: DatabaseConfig
+  )(implicit cs: ContextShift[IO]): IO[HikariTransactor[IO]] = {
+    val config = new HikariConfig()
+    config.setJdbcUrl(dbConfig.url)
+    config.setUsername(dbConfig.user)
+    config.setPassword(dbConfig.password)
+    //config.setMaximumPoolSize(dbConfig.poolSize)
+
+    for {
+      es <- IO(Executors.newFixedThreadPool(32))
+      ec = ExecutionContext.fromExecutor(es)
+      be   <- IO(Blocker.liftExecutionContext(ec))
+      resp <- IO.pure(HikariTransactor.apply[IO](new HikariDataSource(config), ec, be))
+    } yield resp
+  }
 
   def initialize(transactor: HikariTransactor[IO]): IO[Unit] =
     transactor.configure { datasource =>
