@@ -1,37 +1,49 @@
 package org.fabian.effectless
 
-import cats.effect.IO
+import cats.effect.{ ContextShift, IO, Timer }
 import io.circe.Json
 import io.circe.literal._
 import io.circe.optics.JsonPath._
+import org.fabian.effectless.Main.contextShift
+import org.fabian.effectless.config.AppConfig
 import org.http4s.circe._
+import org.http4s.client.Client
+import org.http4s.client.blaze.{ BlazeClientBuilder, Http1Client }
 import org.http4s.{ Method, Request, Status, Uri }
 import org.http4s.server.{ Server => Http4sServer }
 import org.http4s.server.blaze.BlazeBuilder
+import cats.implicits._
+import org.http4s.implicits._
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.matchers.must.Matchers
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import org.scalatest.wordspec.AnyWordSpec
 
 //import org.fabian.effectless.config.Config
 import org.fabian.effectless.db.Database
 import org.fabian.effectless.domain.todo.{ TodoHttpEndpoint, TodoRepository }
+import scala.concurrent.ExecutionContext.global
 
 class TodoHttpEndpointITSpec extends AnyWordSpec with Matchers with BeforeAndAfterAll {
-  /* private lazy val client = Http1Client[IO]().unsafeRunSync()
+  private implicit val cs: ContextShift[IO] = IO.contextShift(global)
+  private implicit val timer: Timer[IO] = IO.timer(global)
 
-  private lazy val config = Config.load("test.conf").unsafeRunSync()
+  /*private lazy val client = BlazeClientBuilder[IO](global).resource
+
+  private lazy val config = AppConfig.load("test.conf").unsafeRunSync()
 
   private lazy val urlStart = s"http://${config.server.host}:${config.server.port}"
 
   private val server = createServer().unsafeRunSync()
 
   override def afterAll(): Unit = {
-    client.shutdown.unsafeRunSync()
-    server.shutdown.unsafeRunSync()
+    /*client.shutdown.unsafeRunSync()
+    server.shutdown.unsafeRunSync()*/
   }
 
   "Todo server" should {
-    "create a todo" in {
+
+    "create a todo" in withServerAndClient { (server, client) =>
       val description = "my todo 1"
       val importance = "high"
       val createJson = json"""
@@ -42,14 +54,15 @@ class TodoHttpEndpointITSpec extends AnyWordSpec with Matchers with BeforeAndAft
       val request = Request[IO](
         method = Method.POST,
         uri = Uri.unsafeFromString(s"$urlStart/todos")
-      ).withBody(createJson).unsafeRunSync()
+      ).withEntity(createJson)
+
       val json = client.expect[Json](request).unsafeRunSync()
       root.id.long.getOption(json).nonEmpty shouldBe true
       root.description.string.getOption(json) shouldBe Some(description)
       root.importance.string.getOption(json) shouldBe Some(importance)
     }
 
-    "update a todo" in {
+    "update a todo" in withServerAndClient { (server, client) =>
       val id = createTodo("my todo 2", "low")
 
       val description = "updated todo"
@@ -71,7 +84,7 @@ class TodoHttpEndpointITSpec extends AnyWordSpec with Matchers with BeforeAndAft
         }"""
     }
 
-    "return a single todo" in {
+    "return a single todo" in withServerAndClient { (server, client) =>
       val description = "my todo 3"
       val importance = "medium"
       val id = createTodo(description, importance)
@@ -85,20 +98,21 @@ class TodoHttpEndpointITSpec extends AnyWordSpec with Matchers with BeforeAndAft
         }"""
     }
 
-    "delete a todo" in {
+    "delete a todo" in withServerAndClient { (server, client) =>
       val description = "my todo 4"
       val importance = "low"
       val id = createTodo(description, importance)
       val deleteRequest =
         Request[IO](method = Method.DELETE, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
       client.status(deleteRequest).unsafeRunSync() shouldBe Status.NoContent
+      client.
 
       val getRequest =
         Request[IO](method = Method.GET, uri = Uri.unsafeFromString(s"$urlStart/todos/$id"))
       client.status(getRequest).unsafeRunSync() shouldBe Status.NotFound
     }
 
-    "return all todos" in {
+    "return all todos" in withServerAndClient { (server, client) =>
       // Remove all existing todos
       val json = client.expect[Json](Uri.unsafeFromString(s"$urlStart/todos")).unsafeRunSync()
       root.each.id.long.getAll(json).foreach { id =>
@@ -146,6 +160,9 @@ class TodoHttpEndpointITSpec extends AnyWordSpec with Matchers with BeforeAndAft
     root.id.long.getOption(json).get
   }
 
+  def withServerAndClient[A](f: (Http4sServer[IO], Client[IO]) => A): A =
+    (server, client).tupled.use(f.tupled).unsafeRunSync()
+
   private def createServer(): IO[Http4sServer[IO]] =
     for {
       transactor <- Database.transactor(config.database)
@@ -154,6 +171,6 @@ class TodoHttpEndpointITSpec extends AnyWordSpec with Matchers with BeforeAndAft
       server <- BlazeBuilder[IO]
         .bindHttp(config.server.port, config.server.host)
         .mountService(new TodoHttpEndpoint(repository).service, "/")
-        .start
+        .serve
     } yield server*/
 }
